@@ -120,7 +120,8 @@ GSR = 184_800
 PF_GSR = 184_800
 VACANCY_PCT = 0.03
 OTHER_INCOME = 0
-NON_TAX_EXP = 33_212
+NON_TAX_NON_MGMT = 26_554
+MGMT_PCT = 0.04
 
 INTEREST_RATE = 0.0675
 AMORTIZATION_YEARS = 30
@@ -151,7 +152,8 @@ def calc_metrics(price):
     taxes = price * TAX_RATE
     egi = GSR * (1 - VACANCY_PCT) + OTHER_INCOME
     pf_egi = PF_GSR * (1 - VACANCY_PCT) + OTHER_INCOME
-    total_exp = NON_TAX_EXP + taxes
+    mgmt = MGMT_PCT * egi
+    total_exp = NON_TAX_NON_MGMT + mgmt + taxes
     noi = egi - total_exp
     pf_noi = pf_egi - total_exp
     loan_amount = price * LTV
@@ -851,7 +853,7 @@ html_parts.append(f"""
 <tr class="summary"><td><strong>Net Operating Income</strong></td><td class="num"><strong>${NOI_AT_LIST:,.0f}</strong></td><td class="num"><strong>${NOI_AT_LIST//UNITS:,.0f}</strong></td><td class="num"><strong>{NOI_AT_LIST/CUR_EGI*100:.1f}%</strong></td></tr>
 </tbody>
 </table>
-<p style="font-size:11px;font-style:italic;color:#666;">Property taxes shown at current assessment ($12,714). Reassessed at purchase price: see note [1].</p>
+<p style="font-size:11px;font-style:italic;color:#666;">Property taxes shown at reassessed basis ($2,350,000 &times; 1.17%). Current Prop 13 basis: $12,714. See note [1].</p>
 </div>
 <div class="os-right">
 <h3 class="sub-heading" style="margin-top:0;">Notes to Operating Statement</h3>
