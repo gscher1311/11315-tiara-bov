@@ -4,6 +4,7 @@ Build script for 11315 Tiara St BOV - North Hollywood, CA 91601
 3+1 JADU residential | 3-agent layout (Logan Ward lead, Glen Scher, Filip Niculete)
 """
 import base64, json, os, sys, io, math, urllib.request, urllib.parse
+from PIL import Image, ImageDraw, ImageFont
 
 if sys.platform == "win32":
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
@@ -107,6 +108,77 @@ for addr in COMP_ADDRESSES:
     COMP_ADDRESSES[addr] = geocode_census(addr)
 for addr in RENT_COMP_ADDRESSES:
     RENT_COMP_ADDRESSES[addr] = geocode_census(addr)
+
+# ============================================================
+# STATIC MAP GENERATION (Pillow + OSM Tiles)
+# ============================================================
+def lat_lng_to_tile(lat, lng, zoom):
+    n = 2 ** zoom
+    x = int((lng + 180) / 360 * n)
+    lat_rad = math.radians(lat)
+    y = int((1 - math.log(math.tan(lat_rad) + 1/math.cos(lat_rad)) / math.pi) / 2 * n)
+    return x, y
+
+def lat_lng_to_pixel(lat, lng, zoom, origin_x, origin_y):
+    n = 2 ** zoom
+    px = (lng + 180) / 360 * n * 256 - origin_x * 256
+    lat_rad = math.radians(lat)
+    py = (1 - math.log(math.tan(lat_rad) + 1/math.cos(lat_rad)) / math.pi) / 2 * n * 256 - origin_y * 256
+    return int(px), int(py)
+
+def generate_static_map(center_lat, center_lng, markers, width=800, height=400, zoom=14):
+    cx, cy = lat_lng_to_tile(center_lat, center_lng, zoom)
+    tiles_x = math.ceil(width / 256) + 2
+    tiles_y = math.ceil(height / 256) + 2
+    start_x = cx - tiles_x // 2
+    start_y = cy - tiles_y // 2
+    big = Image.new("RGB", (tiles_x * 256, tiles_y * 256), (220, 220, 220))
+    for tx in range(tiles_x):
+        for ty in range(tiles_y):
+            tile_url = f"https://tile.openstreetmap.org/{zoom}/{start_x + tx}/{start_y + ty}.png"
+            req = urllib.request.Request(tile_url, headers={"User-Agent": "LAAA-BOV-Builder/1.0"})
+            try:
+                tile_data = urllib.request.urlopen(req, timeout=10).read()
+                tile_img = Image.open(io.BytesIO(tile_data))
+                big.paste(tile_img, (tx * 256, ty * 256))
+            except Exception:
+                pass
+    n = 2 ** zoom
+    offset_px = (center_lng + 180) / 360 * n * 256 - width / 2
+    lat_rad = math.radians(center_lat)
+    offset_py = (1 - math.log(math.tan(lat_rad) + 1/math.cos(lat_rad)) / math.pi) / 2 * n * 256 - height / 2
+    crop_left = int(offset_px - start_x * 256)
+    crop_top = int(offset_py - start_y * 256)
+    cropped = big.crop((crop_left, crop_top, crop_left + width, crop_top + height))
+    draw = ImageDraw.Draw(cropped)
+    for m in markers:
+        lat, lng, label, color = m["lat"], m["lng"], m.get("label", ""), m.get("color", "#1B3A5C")
+        px = int((lng + 180) / 360 * n * 256 - offset_px)
+        py = int((1 - math.log(math.tan(math.radians(lat)) + 1/math.cos(math.radians(lat))) / math.pi) / 2 * n * 256 - offset_py)
+        r = 14 if label == "★" else 11
+        draw.ellipse([px - r, py - r, px + r, py + r], fill=color, outline="white", width=2)
+        if label:
+            try:
+                font = ImageFont.truetype("arial.ttf", 12 if label == "★" else 10)
+            except Exception:
+                font = ImageFont.load_default()
+            bbox = draw.textbbox((0, 0), label, font=font)
+            tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
+            draw.text((px - tw // 2, py - th // 2 - 1), label, fill="white", font=font)
+    buf = io.BytesIO()
+    cropped.save(buf, format="PNG", optimize=True)
+    b64 = base64.b64encode(buf.getvalue()).decode("ascii")
+    print(f"  Static map generated: {width}x{height}, {len(markers)} markers, {len(b64)//1024}KB")
+    return f"data:image/png;base64,{b64}"
+
+def build_markers_from_comps(comps, addr_dict, comp_color, subject_lat, subject_lng):
+    markers = [{"lat": subject_lat, "lng": subject_lng, "label": "★", "color": "#C5A258"}]
+    for i, c in enumerate(comps):
+        for a, coords in addr_dict.items():
+            if coords and c["addr"].lower() in a.lower():
+                markers.append({"lat": coords[0], "lng": coords[1], "label": str(i + 1), "color": comp_color})
+                break
+    return markers
 
 # ============================================================
 # FINANCIAL CONSTANTS
@@ -252,6 +324,21 @@ rent_comps_for_map = [
 ]
 rent_map_js = build_map_js("rentMap", rent_comps_for_map, "#1B3A5C", RENT_COMP_ADDRESSES, SUBJECT_LAT, SUBJECT_LNG)
 
+# Generate static maps for PDF
+print("\nGenerating static maps...")
+IMG["loc_map"] = generate_static_map(SUBJECT_LAT, SUBJECT_LNG,
+    [{"lat": SUBJECT_LAT, "lng": SUBJECT_LNG, "label": "★", "color": "#C5A258"}],
+    width=800, height=220, zoom=15)
+
+sale_markers = build_markers_from_comps(SALE_COMPS, COMP_ADDRESSES, "#1B3A5C", SUBJECT_LAT, SUBJECT_LNG)
+IMG["sale_map_static"] = generate_static_map(SUBJECT_LAT, SUBJECT_LNG, sale_markers, width=800, height=300, zoom=14)
+
+active_markers = build_markers_from_comps(ON_MARKET_COMPS, COMP_ADDRESSES, "#2E7D32", SUBJECT_LAT, SUBJECT_LNG)
+IMG["active_map_static"] = generate_static_map(SUBJECT_LAT, SUBJECT_LNG, active_markers, width=800, height=300, zoom=14)
+
+rent_markers = build_markers_from_comps(rent_comps_for_map, RENT_COMP_ADDRESSES, "#1B3A5C", SUBJECT_LAT, SUBJECT_LNG)
+IMG["rent_map_static"] = generate_static_map(SUBJECT_LAT, SUBJECT_LNG, rent_markers, width=800, height=300, zoom=13)
+
 # ============================================================
 # GENERATE DYNAMIC TABLE HTML
 # ============================================================
@@ -305,7 +392,7 @@ total_exp_calc = sum(v for _, v, _ in expense_lines)
 os_expense_html = ""
 for label, val, note_num in expense_lines:
     ref = f' <span class="note-ref">[{note_num}]</span>' if note_num else ""
-    os_expense_html += f'<tr><td>{label}{ref}</td><td class="num">${val:,.0f}</td><td class="num">${val/UNITS:,.0f}</td><td class="num">{val/CUR_EGI*100:.1f}%</td></tr>\n'
+    os_expense_html += f'<tr><td>{label}{ref}</td><td class="num">${val:,.0f}</td><td class="num">${val/UNITS:,.0f}</td><td class="num">${val/SF:.2f}</td><td class="num">{val/CUR_EGI*100:.1f}%</td></tr>\n'
 
 NOI_AT_LIST = CUR_EGI - total_exp_calc
 
@@ -385,7 +472,7 @@ table{width:100%;border-collapse:collapse;margin-bottom:24px;font-size:13px;}th{
 .buyer-split{display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:start;}.buyer-objections .obj-item{margin-bottom:14px;}.buyer-objections .obj-q{font-weight:700;color:#1B3A5C;margin-bottom:4px;font-size:14px;}.buyer-objections .obj-a{font-size:13px;color:#444;line-height:1.6;}.buyer-photo{width:100%;height:220px;border-radius:8px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);margin-top:24px;}.buyer-photo img{width:100%;height:100%;object-fit:cover;object-position:center;display:block;}
 .leaflet-map{height:400px;border-radius:4px;border:1px solid #ddd;margin-bottom:30px;z-index:1;}.map-fallback{display:none;}.comp-map-print{display:none;}.embed-map-wrap{position:relative;width:100%;margin-bottom:20px;border-radius:8px;overflow:hidden;}.embed-map-wrap iframe{display:block;width:100%;height:420px;border:0;}
 .page-break-marker{height:4px;background:repeating-linear-gradient(90deg,#ddd 0,#ddd 8px,transparent 8px,transparent 16px);}.photo-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:30px;overflow:hidden;}.photo-grid img{width:100%;height:180px;object-fit:cover;border-radius:4px;}.highlight-box{background:#f0f4f8;border:1px solid #dce3eb;border-radius:8px;padding:20px 24px;margin:24px 0;}.narrative{font-size:13px;line-height:1.7;}
-.footer{background:#1B3A5C;color:#fff;padding:50px 40px;text-align:center;}.footer-logo{width:180px;margin-bottom:30px;}.footer-team{display:flex;justify-content:center;gap:40px;margin-bottom:30px;flex-wrap:wrap;}.footer-person{text-align:center;flex:1;min-width:250px;}.footer-headshot{width:70px;height:70px;border-radius:50%;border:2px solid #C5A258;object-fit:cover;}.footer-name{font-size:16px;font-weight:600;}.footer-title{font-size:12px;color:#C5A258;margin-bottom:8px;}.footer-contact{font-size:12px;color:rgba(255,255,255,0.7);line-height:1.8;}.footer-contact a{color:rgba(255,255,255,0.7);text-decoration:none;}.footer-office{font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:8px;}.footer-disclaimer{font-size:10px;color:rgba(255,255,255,0.35);margin-top:20px;max-width:800px;margin-left:auto;margin-right:auto;}
+.footer{background:#1B3A5C;color:#fff;padding:50px 40px;text-align:center;}.footer-logo{width:180px;margin-bottom:30px;}.footer-team{display:flex;justify-content:center;gap:40px;margin-bottom:30px;flex-wrap:wrap;}.footer-person{text-align:center;flex:1;min-width:280px;}.footer-headshot{width:70px;height:70px;border-radius:50%;border:2px solid #C5A258;object-fit:cover;}.footer-name{font-size:16px;font-weight:600;}.footer-title{font-size:12px;color:#C5A258;margin-bottom:8px;}.footer-contact{font-size:12px;color:rgba(255,255,255,0.7);line-height:1.8;}.footer-contact a{color:rgba(255,255,255,0.7);text-decoration:none;}.footer-office{font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:8px;}.footer-disclaimer{font-size:10px;color:rgba(255,255,255,0.35);margin-top:20px;max-width:800px;margin-left:auto;margin-right:auto;}
 
 @media (max-width:768px){.cover-content{padding:30px 20px;}.cover-title{font-size:32px;}.cover-logo{width:220px;}.cover-headshots{gap:24px;}.cover-headshot{width:60px;height:60px;}.section{padding:30px 16px;}.photo-grid{grid-template-columns:1fr;}.two-col,.buyer-split,.inv-split,.os-two-col,.loc-grid{grid-template-columns:1fr;}.metrics-grid,.metrics-grid-4{grid-template-columns:repeat(2,1fr);gap:12px;}.metric-card{padding:14px 10px;}.metric-value{font-size:22px;}.mkt-channels,.perf-grid{grid-template-columns:1fr;}.summary-two-col,.prop-grid-4{grid-template-columns:1fr;}.pdf-float-btn{padding:10px 18px;font-size:12px;bottom:16px;right:16px;}.toc-nav{padding:0 6px;}.toc-nav a{font-size:10px;padding:10px 6px;letter-spacing:0.2px;}.leaflet-map{height:300px;}.embed-map-wrap iframe{height:320px;}.loc-wide-map{height:180px;margin-top:16px;}.table-scroll table{min-width:560px;}.bio-grid{grid-template-columns:1fr;gap:16px;}.bio-headshot{width:60px;height:60px;}.footer-team{flex-direction:column;align-items:center;}.press-strip{gap:16px;}.press-logo{font-size:11px;}.costar-badge-title{font-size:18px;}.img-float-right{float:none;width:100%;margin:0 0 16px 0;}.inv-photo{height:240px;}}
 @media (max-width:420px){.cover-title{font-size:26px;}.cover-stat-value{font-size:20px;}.cover-headshots{gap:16px;}.cover-headshot{width:50px;height:50px;}.metrics-grid-4{grid-template-columns:1fr 1fr;}.metric-value{font-size:18px;}.section{padding:20px 12px;}}
@@ -630,6 +717,7 @@ html_parts.append(f"""
 </table>
 </div>
 </div>
+<div class="loc-wide-map"><img src="{IMG["loc_map"]}" alt="Location Map"></div>
 </div>
 """)
 
@@ -741,6 +829,7 @@ html_parts.append(f"""
 <div class="section-divider"></div>
 <div class="leaflet-map" id="saleMap"></div>
 <p class="map-fallback">Interactive map available at the live URL.</p>
+<div class="comp-map-print"><img src="{IMG["sale_map_static"]}" alt="Sale Comps Map"></div>
 <div class="table-scroll"><table>
 <thead><tr><th>#</th><th>Address</th><th class="num">Units</th><th>Year</th><th class="num">SF</th><th class="num">Price</th><th class="num">$/Unit</th><th class="num">$/SF</th><th class="num">GRM</th><th>Sold</th><th class="num">DOM</th><th>Notes</th></tr></thead>
 <tbody>{sale_comp_html}</tbody>
@@ -767,6 +856,7 @@ html_parts.append(f"""
 <div class="section-divider"></div>
 <div class="leaflet-map" id="activeMap"></div>
 <p class="map-fallback">Interactive map available at the live URL.</p>
+<div class="comp-map-print"><img src="{IMG["active_map_static"]}" alt="On-Market Comps Map"></div>
 <div class="table-scroll"><table>
 <thead><tr><th>#</th><th>Address</th><th class="num">Units</th><th>Year</th><th>SF</th><th class="num">List Price</th><th class="num">$/Unit</th><th class="num">$/SF</th><th class="num">DOM</th><th>Notes</th></tr></thead>
 <tbody>{on_market_html}</tbody>
@@ -787,6 +877,7 @@ html_parts.append(f"""
 <div class="section-divider"></div>
 <div class="leaflet-map" id="rentMap"></div>
 <p class="map-fallback">Interactive map available at the live URL.</p>
+<div class="comp-map-print"><img src="{IMG["rent_map_static"]}" alt="Rent Comps Map"></div>
 <h3 class="sub-heading">3-Bedroom / 2-Bathroom Comps (Subject Units 1-3)</h3>
 <div class="table-scroll"><table>
 <thead><tr><th>#</th><th>Address</th><th class="num">Rent</th><th class="num">SF</th><th class="num">$/SF</th><th>Source</th><th>Features</th></tr></thead>
@@ -838,19 +929,19 @@ html_parts.append(f"""
 <div class="os-left">
 <h3 class="sub-heading" style="margin-top:0;">Operating Statement</h3>
 <table>
-<thead><tr><th>Income</th><th class="num">Annual</th><th class="num">Per Unit</th><th class="num">% EGI</th></tr></thead>
+<thead><tr><th>Income</th><th class="num">Annual</th><th class="num">Per Unit</th><th class="num">$/SF</th><th class="num">% EGI</th></tr></thead>
 <tbody>
-<tr><td>Gross Scheduled Rent (Market GSR)</td><td class="num">${GSR:,.0f}</td><td class="num">${GSR//UNITS:,.0f}</td><td class="num">--</td></tr>
-<tr><td>Less: Vacancy &amp; Credit Loss (3%)</td><td class="num">-${GSR*VACANCY_PCT:,.0f}</td><td class="num">-${GSR*VACANCY_PCT//UNITS:,.0f}</td><td class="num">--</td></tr>
-<tr class="summary"><td><strong>Effective Gross Income</strong></td><td class="num"><strong>${CUR_EGI:,.0f}</strong></td><td class="num"><strong>${CUR_EGI//UNITS:,.0f}</strong></td><td class="num"><strong>100%</strong></td></tr>
+<tr><td>Gross Scheduled Rent (Market GSR)</td><td class="num">${GSR:,.0f}</td><td class="num">${GSR//UNITS:,.0f}</td><td class="num">${GSR/SF:.2f}</td><td class="num">--</td></tr>
+<tr><td>Less: Vacancy &amp; Credit Loss (3%)</td><td class="num">-${GSR*VACANCY_PCT:,.0f}</td><td class="num">-${GSR*VACANCY_PCT//UNITS:,.0f}</td><td class="num">-${GSR*VACANCY_PCT/SF:.2f}</td><td class="num">--</td></tr>
+<tr class="summary"><td><strong>Effective Gross Income</strong></td><td class="num"><strong>${CUR_EGI:,.0f}</strong></td><td class="num"><strong>${CUR_EGI//UNITS:,.0f}</strong></td><td class="num"><strong>${CUR_EGI/SF:.2f}</strong></td><td class="num"><strong>100%</strong></td></tr>
 </tbody>
 </table>
 <table>
-<thead><tr><th>Expenses</th><th class="num">Annual</th><th class="num">Per Unit</th><th class="num">% EGI</th></tr></thead>
+<thead><tr><th>Expenses</th><th class="num">Annual</th><th class="num">Per Unit</th><th class="num">$/SF</th><th class="num">% EGI</th></tr></thead>
 <tbody>
 {os_expense_html}
-<tr class="summary"><td><strong>Total Expenses</strong></td><td class="num"><strong>${total_exp_calc:,.0f}</strong></td><td class="num"><strong>${total_exp_calc//UNITS:,.0f}</strong></td><td class="num"><strong>{total_exp_calc/CUR_EGI*100:.1f}%</strong></td></tr>
-<tr class="summary"><td><strong>Net Operating Income</strong></td><td class="num"><strong>${NOI_AT_LIST:,.0f}</strong></td><td class="num"><strong>${NOI_AT_LIST//UNITS:,.0f}</strong></td><td class="num"><strong>{NOI_AT_LIST/CUR_EGI*100:.1f}%</strong></td></tr>
+<tr class="summary"><td><strong>Total Expenses</strong></td><td class="num"><strong>${total_exp_calc:,.0f}</strong></td><td class="num"><strong>${total_exp_calc//UNITS:,.0f}</strong></td><td class="num"><strong>${total_exp_calc/SF:.2f}</strong></td><td class="num"><strong>{total_exp_calc/CUR_EGI*100:.1f}%</strong></td></tr>
+<tr class="summary"><td><strong>Net Operating Income</strong></td><td class="num"><strong>${NOI_AT_LIST:,.0f}</strong></td><td class="num"><strong>${NOI_AT_LIST//UNITS:,.0f}</strong></td><td class="num"><strong>${NOI_AT_LIST/SF:.2f}</strong></td><td class="num"><strong>{NOI_AT_LIST/CUR_EGI*100:.1f}%</strong></td></tr>
 </tbody>
 </table>
 <p style="font-size:11px;font-style:italic;color:#666;">Property taxes shown at reassessed basis ($2,350,000 &times; 1.17%). Current Prop 13 basis: $12,714. See note [1].</p>
@@ -954,8 +1045,8 @@ html_parts.append(f"""
 <tbody>{matrix_html}</tbody>
 </table></div>
 <div class="summary-trade-range">
-<div class="summary-trade-label">Expected Sale Range</div>
-<div class="summary-trade-prices">$2,000,000 - $2,200,000</div>
+<div class="summary-trade-label">A Trade Price in the Current Investment Environment of</div>
+<div class="summary-trade-prices">$2,000,000 &mdash; $2,200,000</div>
 </div>
 <h3 class="sub-heading">Pricing Rationale</h3>
 <div class="narrative">
