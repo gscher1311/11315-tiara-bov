@@ -170,6 +170,21 @@ def generate_static_map(center_lat, center_lng, markers, width=800, height=400, 
     print(f"  Static map generated: {width}x{height}, {len(markers)} markers, {len(b64)//1024}KB")
     return f"data:image/png;base64,{b64}"
 
+def calc_auto_zoom(markers, width=800, height=300, padding_pct=0.10):
+    """Calculate the best OSM zoom level to fit all markers within the image."""
+    if len(markers) <= 1:
+        return 15
+    lats = [m["lat"] for m in markers]
+    lngs = [m["lng"] for m in markers]
+    lat_span = max(lats) - min(lats)
+    lng_span = max(lngs) - min(lngs)
+    lat_span = max(lat_span * (1 + padding_pct * 2), 0.002)
+    lng_span = max(lng_span * (1 + padding_pct * 2), 0.002)
+    zoom_lat = math.log2(height / 256 * 360 / lat_span) if lat_span > 0 else 18
+    zoom_lng = math.log2(width / 256 * 360 / lng_span) if lng_span > 0 else 18
+    zoom = int(min(zoom_lat, zoom_lng))
+    return max(10, min(zoom, 16))
+
 def build_markers_from_comps(comps, addr_dict, comp_color, subject_lat, subject_lng):
     markers = [{"lat": subject_lat, "lng": subject_lng, "label": "★", "color": "#C5A258"}]
     for i, c in enumerate(comps):
@@ -299,9 +314,10 @@ def fp(n):
     return f"{n:.2f}%"
 
 def build_map_js(map_id, comps, comp_color, addr_dict, subject_lat, subject_lng, subject_label="11315 Tiara St"):
-    js = f"var {map_id} = L.map('{map_id}').setView([{subject_lat}, {subject_lng}], 14);\n"
+    js = f"var {map_id} = L.map('{map_id}');\n"
     js += f"L.tileLayer('https://{{s}}.tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png', {{attribution: '&copy; OpenStreetMap'}}).addTo({map_id});\n"
-    js += f"""L.marker([{subject_lat}, {subject_lng}], {{icon: L.divIcon({{className: 'custom-marker', html: '<div style="background:#C5A258;color:#fff;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3);">&#9733;</div>', iconSize: [32, 32], iconAnchor: [16, 16]}})}})\n.addTo({map_id}).bindPopup('<b>{subject_label}</b><br>Subject Property<br>{UNITS} Units | {SF:,} SF');\n"""
+    js += f"var {map_id}Markers = [];\n"
+    js += f"""var {map_id}Sub = L.marker([{subject_lat}, {subject_lng}], {{icon: L.divIcon({{className: 'custom-marker', html: '<div style="background:#C5A258;color:#fff;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3);">&#9733;</div>', iconSize: [32, 32], iconAnchor: [16, 16]}})}})\n.addTo({map_id}).bindPopup('<b>{subject_label}</b><br>Subject Property<br>{UNITS} Units | {SF:,} SF');\n{map_id}Markers.push({map_id}Sub);\n"""
     for i, c in enumerate(comps):
         lat, lng = None, None
         for a, coords in addr_dict.items():
@@ -313,7 +329,9 @@ def build_map_js(map_id, comps, comp_color, addr_dict, subject_lat, subject_lng,
         label = str(i + 1)
         price_str = fc(c.get("price", 0))
         popup = f"<b>#{label}: {c['addr']}</b><br>{c.get('units', '')} Units | {price_str}"
-        js += f"""L.marker([{lat}, {lng}], {{icon: L.divIcon({{className: 'custom-marker', html: '<div style="background:{comp_color};color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;border:2px solid #fff;box-shadow:0 2px 4px rgba(0,0,0,0.3);">{label}</div>', iconSize: [26, 26], iconAnchor: [13, 13]}})}})\n.addTo({map_id}).bindPopup('{popup}');\n"""
+        js += f"""var {map_id}M{label} = L.marker([{lat}, {lng}], {{icon: L.divIcon({{className: 'custom-marker', html: '<div style="background:{comp_color};color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;border:2px solid #fff;box-shadow:0 2px 4px rgba(0,0,0,0.3);">{label}</div>', iconSize: [26, 26], iconAnchor: [13, 13]}})}})\n.addTo({map_id}).bindPopup('{popup}');\n{map_id}Markers.push({map_id}M{label});\n"""
+    js += f"var {map_id}Group = L.featureGroup({map_id}Markers);\n"
+    js += f"{map_id}.fitBounds({map_id}Group.getBounds().pad(0.1));\n"
     return js
 
 sale_map_js = build_map_js("saleMap", SALE_COMPS, "#1B3A5C", COMP_ADDRESSES, SUBJECT_LAT, SUBJECT_LNG)
@@ -335,13 +353,13 @@ IMG["loc_map"] = generate_static_map(SUBJECT_LAT, SUBJECT_LNG,
     width=800, height=220, zoom=15)
 
 sale_markers = build_markers_from_comps(SALE_COMPS, COMP_ADDRESSES, "#1B3A5C", SUBJECT_LAT, SUBJECT_LNG)
-IMG["sale_map_static"] = generate_static_map(SUBJECT_LAT, SUBJECT_LNG, sale_markers, width=800, height=300, zoom=14)
+IMG["sale_map_static"] = generate_static_map(SUBJECT_LAT, SUBJECT_LNG, sale_markers, width=800, height=300, zoom=calc_auto_zoom(sale_markers))
 
 active_markers = build_markers_from_comps(ON_MARKET_COMPS, COMP_ADDRESSES, "#2E7D32", SUBJECT_LAT, SUBJECT_LNG)
-IMG["active_map_static"] = generate_static_map(SUBJECT_LAT, SUBJECT_LNG, active_markers, width=800, height=300, zoom=14)
+IMG["active_map_static"] = generate_static_map(SUBJECT_LAT, SUBJECT_LNG, active_markers, width=800, height=300, zoom=calc_auto_zoom(active_markers))
 
 rent_markers = build_markers_from_comps(rent_comps_for_map, RENT_COMP_ADDRESSES, "#1B3A5C", SUBJECT_LAT, SUBJECT_LNG)
-IMG["rent_map_static"] = generate_static_map(SUBJECT_LAT, SUBJECT_LNG, rent_markers, width=800, height=300, zoom=13)
+IMG["rent_map_static"] = generate_static_map(SUBJECT_LAT, SUBJECT_LNG, rent_markers, width=800, height=300, zoom=calc_auto_zoom(rent_markers))
 
 # ============================================================
 # GENERATE DYNAMIC TABLE HTML
@@ -525,12 +543,15 @@ table{width:100%;border-collapse:collapse;margin-bottom:24px;font-size:13px;}th{
 .metric-card{padding:12px 8px;border-radius:6px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}.metric-value{font-size:20px;}.metric-label{font-size:9px;}
 table{font-size:11px;}th{padding:6px 8px;font-size:9px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}td{padding:5px 8px;}tr.highlight{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
 .tr-tagline{font-size:15px;padding:8px 14px;margin-bottom:8px;}.tr-map-print{display:block;width:100%;height:240px;border-radius:4px;overflow:hidden;margin-bottom:8px;}.tr-map-print img{width:100%;height:100%;object-fit:cover;object-position:center;-webkit-print-color-adjust:exact;print-color-adjust:exact;}.tr-service-quote{margin:10px 0;}.tr-service-quote h3{font-size:13px;margin-bottom:4px;}.tr-service-quote p{font-size:11px;line-height:1.45;}
-.bio-headshot{width:75px;height:75px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}.bio-text{font-size:11px;}.team-headshot{width:45px;height:45px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}.team-card-name{font-size:11px;}.team-card-title{font-size:9px;}.costar-badge{padding:12px 16px;margin:16px auto;-webkit-print-color-adjust:exact;print-color-adjust:exact;}.costar-badge-title{font-size:16px;}.condition-note{padding:10px 14px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}.achievements-list{font-size:11px;}
+.tr-page2 .section-title{font-size:18px;margin-bottom:2px;}.tr-page2 .section-divider{margin-bottom:8px;}.bio-grid{gap:12px;margin:8px 0;}.bio-card{gap:10px;}.bio-headshot{width:75px;height:75px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}.bio-text{font-size:11px;}.team-grid{gap:6px;margin:8px 0;}.team-headshot{width:45px;height:45px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}.team-card-name{font-size:11px;}.team-card-title{font-size:9px;}.costar-badge{padding:8px 12px;margin:8px auto;-webkit-print-color-adjust:exact;print-color-adjust:exact;}.costar-badge-title{font-size:16px;}.condition-note{padding:8px 14px;margin-top:8px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}.achievements-list{font-size:11px;line-height:1.5;}.press-strip{padding:6px 12px;gap:16px;margin-top:8px;}.press-logo{font-size:10px;}
+#marketing{page-break-before:always;}#marketing .section-title{font-size:18px;margin-bottom:2px;}#marketing .section-subtitle{font-size:11px;margin-bottom:4px;}#marketing .section-divider{margin-bottom:6px;}#marketing .metrics-grid-4{gap:8px;margin-bottom:8px;grid-template-columns:repeat(4,1fr);}#marketing .metric-card{padding:8px 6px;}#marketing .metric-value{font-size:18px;}#marketing .metric-label{font-size:8px;}.mkt-quote{padding:8px 14px;margin:8px 0;font-size:11px;line-height:1.4;-webkit-print-color-adjust:exact;print-color-adjust:exact;}.mkt-channels{gap:10px;margin-top:8px;grid-template-columns:1fr 1fr;}.mkt-channel{padding:8px 12px;border-radius:6px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}.mkt-channel h4{font-size:11px;margin-bottom:4px;}.mkt-channel li{font-size:10px;line-height:1.4;margin-bottom:2px;}.perf-grid{gap:10px;margin-top:8px;grid-template-columns:1fr 1fr;}.perf-card{padding:8px 12px;border-radius:6px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}.perf-card h4{font-size:11px;margin-bottom:4px;}.perf-card li{font-size:10px;line-height:1.4;margin-bottom:2px;}.platform-strip{padding:6px 12px;gap:12px;margin-top:8px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}.platform-strip-label{font-size:8px;}.platform-strip img{height:18px;}
 .inv-text p{font-size:11px;line-height:1.5;margin-bottom:6px;}.inv-logo{display:none !important;}.inv-right{padding-top:30px;}.inv-photo{height:220px;}.inv-photo img{-webkit-print-color-adjust:exact;print-color-adjust:exact;}.inv-highlights{padding:10px 14px;}.inv-highlights h4{font-size:11px;margin-bottom:4px;}.inv-highlights li{font-size:10px;line-height:1.4;margin-bottom:2px;}
-.loc-grid{display:grid;grid-template-columns:58% 42%;gap:14px;page-break-inside:avoid;}.loc-left{max-height:340px;overflow:hidden;}.loc-left p{font-size:10.5px;line-height:1.4;margin-bottom:5px;}.loc-wide-map{height:220px;margin-top:8px;}.loc-wide-map img{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-.os-two-col{page-break-before:always;align-items:stretch;}.os-right{font-size:9.5px;line-height:1.3;}
-.summary-page{page-break-before:always;}.summary-table{font-size:10px;}.summary-header{font-size:9px !important;}
+.loc-grid{display:grid;grid-template-columns:58% 42%;gap:14px;page-break-inside:avoid;}.loc-left{max-height:340px;overflow:hidden;}.loc-left p{font-size:10.5px;line-height:1.4;margin-bottom:5px;}.loc-right{max-height:340px;overflow:hidden;}.loc-right table{font-size:10px;}.loc-right th{font-size:9px;padding:4px 6px;}.loc-right td{padding:4px 6px;font-size:10px;}.loc-wide-map{height:220px;margin-top:8px;}.loc-wide-map img{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+#prop-details{page-break-before:always;}.prop-grid-4{gap:12px;}.prop-grid-4 table{font-size:10px;}.prop-grid-4 th{font-size:9px;padding:4px 6px;}.prop-grid-4 td{padding:4px 6px;font-size:10px;}
+.os-two-col{page-break-before:always;align-items:stretch;gap:16px;}.os-left table{font-size:10px;}.os-left th{font-size:9px;padding:4px 6px;}.os-left td{padding:4px 6px;}.os-right{font-size:9.5px;line-height:1.3;padding:10px 12px;}.os-right p{margin-bottom:4px;font-size:9.5px;}.os-right .sub-heading{font-size:12px;margin-bottom:6px;}
+.summary-page{page-break-before:always;padding:12px;}.summary-banner{font-size:12px;padding:6px 12px;margin-bottom:10px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}.summary-two-col{gap:12px;}.summary-table{font-size:8px;margin-bottom:8px;}.summary-table td{padding:2px 4px;}.summary-table th{padding:2px 4px;}.summary-header{font-size:7px !important;padding:3px 4px !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
 .obj-q{font-size:11px;margin-bottom:2px;}.obj-a{font-size:10px;line-height:1.4;}.obj-item{margin-bottom:8px;}.bp-closing{font-size:10px;}.buyer-photo{height:180px;}.buyer-photo img{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+#sale-comps,#on-market,#rent-comps{page-break-before:always;}.comp-narratives p.narrative{font-size:10.5px;line-height:1.4;margin-bottom:6px;page-break-inside:avoid;}.comp-narratives p.narrative strong{font-size:10.5px;}
 .comp-map-print{display:block !important;height:280px;border-radius:4px;overflow:hidden;margin-bottom:10px;}.comp-map-print img{width:100%;height:100%;object-fit:cover;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
 .footer{page-break-before:always;-webkit-print-color-adjust:exact;print-color-adjust:exact;}.footer-headshot{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
 .price-reveal{page-break-before:always;}
@@ -621,7 +642,7 @@ html_parts.append(f"""
 # PAGE 3: TRACK RECORD P2 - OUR TEAM
 html_parts.append(f"""
 <div class="page-break-marker"></div>
-<div class="section" style="padding-top:30px;">
+<div class="section tr-page2" style="padding-top:30px;">
 <div style="text-align:center;margin-bottom:8px;"><div class="section-title" style="margin-bottom:4px;">Our Team</div><div class="section-divider" style="margin:0 auto 12px;"></div></div>
 <div class="costar-badge" style="margin-top:4px;margin-bottom:8px;">
 <div class="costar-badge-title">#1 Most Active Multifamily Sales Team in LA County</div>
