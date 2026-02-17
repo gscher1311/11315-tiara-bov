@@ -44,9 +44,6 @@ IMG = {
     "logan": load_image_b64("Logan_Ward.png"),
     "hero": load_image_b64("hero_aerial.jpeg"),
     "grid1": load_image_b64("grid1_exterior_driveway.jpeg"),
-    "grid2": load_image_b64("grid2_rear_exterior.jpeg"),
-    "grid3": load_image_b64("grid3_interior_living.jpeg"),
-    "grid4": load_image_b64("grid4_interior_kitchen.jpeg"),
     "buyer_photo": load_image_b64("buyer_street_view.jpeg"),
     "closings_map": load_image_b64("closings-map.png"),
     "team_aida": load_image_b64("Aida_Memary_Scher.png"),
@@ -250,7 +247,10 @@ def calc_metrics(price):
         "coc": coc, "dscr": dscr, "prin_red": prin_red,
     }
 
-MATRIX_PRICES = list(range(2_295_000, 2_094_999, -25_000))
+# Pricing matrix: 5 above + list + 5 below = 11 rows, $75K increments
+# gap = $2,195K - $1,850K = $345K; min_inc = $86K, max_inc = $115K; $75K covers: bottom = $1,820K
+INCREMENT = 75_000
+MATRIX_PRICES = list(range(LIST_PRICE + 5 * INCREMENT, LIST_PRICE - 5 * INCREMENT - 1, -INCREMENT))
 MATRIX = [calc_metrics(p) for p in MATRIX_PRICES]
 AT_LIST = calc_metrics(LIST_PRICE)
 
@@ -448,8 +448,9 @@ sale_comp_html += f'<td></td><td class="num">{med_dom_str}</td><td></td></tr>\n'
 on_market_html = ""
 for c in ON_MARKET_COMPS:
     psf_str = f'${c["psf"]}' if c["psf"] != "--" else "--"
+    sf_str = f'{c["sf"]:,}' if c["sf"] != "--" else "--"
     on_market_html += f'<tr><td>{c["num"]}</td><td>{c["addr"]}</td><td class="num">{c["units"]}</td>'
-    on_market_html += f'<td>{c["yr"]}</td><td>{c["sf"]}</td>'
+    on_market_html += f'<td>{c["yr"]}</td><td class="num">{sf_str}</td>'
     on_market_html += f'<td class="num">{fc(c["price"])}</td><td class="num">{fc(c["ppu"])}</td>'
     on_market_html += f'<td class="num">{psf_str}</td><td class="num">{c["dom"]}</td>'
     on_market_html += f'<td>{c["notes"]}</td></tr>\n'
@@ -897,7 +898,7 @@ html_parts.append(f"""
 <p class="map-fallback">Interactive map available at the live URL.</p>
 <div class="comp-map-print"><img src="{IMG["active_map_static"]}" alt="On-Market Comps Map"></div>
 <div class="table-scroll"><table>
-<thead><tr><th>#</th><th>Address</th><th class="num">Units</th><th>Year</th><th>SF</th><th class="num">List Price</th><th class="num">$/Unit</th><th class="num">$/SF</th><th class="num">DOM</th><th>Notes</th></tr></thead>
+<thead><tr><th>#</th><th>Address</th><th class="num">Units</th><th>Year</th><th class="num">SF</th><th class="num">List Price</th><th class="num">$/Unit</th><th class="num">$/SF</th><th class="num">DOM</th><th>Notes</th></tr></thead>
 <tbody>{on_market_html}</tbody>
 </table></div>
 <div class="narrative">
@@ -1084,7 +1085,7 @@ html_parts.append(f"""
 <tbody>{matrix_html}</tbody>
 </table></div>
 <div class="summary-trade-range">
-<div class="summary-trade-label">A Trade Price in the Current Investment Environment of</div>
+<div class="summary-trade-label">A TRADE PRICE IN THE CURRENT INVESTMENT ENVIRONMENT OF</div>
 <div class="summary-trade-prices">$1,950,000 &mdash; $2,100,000</div>
 </div>
 <h3 class="sub-heading">Pricing Rationale</h3>
