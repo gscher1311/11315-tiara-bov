@@ -413,6 +413,37 @@ for c in SALE_COMPS:
     sale_comp_html += f'<td class="num">{psf_str}</td><td class="num">{grm_str}</td>'
     sale_comp_html += f'<td>{c["date"]}</td><td class="num">{dom_str}</td><td>{c["notes"]}</td></tr>\n'
 
+# Average and median summary rows
+import statistics
+sc_prices = [c["price"] for c in SALE_COMPS]
+sc_ppus = [c["ppu"] for c in SALE_COMPS]
+sc_psfs = [c["psf"] for c in SALE_COMPS if c["psf"] != "--"]
+sc_grms = [c["grm"] for c in SALE_COMPS if c["grm"] != "--"]
+sc_doms = [c["dom"] for c in SALE_COMPS if c["dom"] != "--"]
+
+avg_price = statistics.mean(sc_prices)
+avg_ppu = statistics.mean(sc_ppus)
+avg_psf = statistics.mean(sc_psfs) if sc_psfs else 0
+avg_grm_str = f'{statistics.mean(sc_grms):.1f}x' if sc_grms else "--"
+avg_dom_str = f'{statistics.mean(sc_doms):.0f}' if sc_doms else "--"
+
+med_price = statistics.median(sc_prices)
+med_ppu = statistics.median(sc_ppus)
+med_psf = statistics.median(sc_psfs) if sc_psfs else 0
+med_grm_str = f'{statistics.median(sc_grms):.1f}x' if sc_grms else "--"
+med_dom_str = f'{statistics.median(sc_doms):.0f}' if sc_doms else "--"
+
+summary_row_style = 'style="background:#FFF8E7;font-weight:600;"'
+sale_comp_html += f'<tr {summary_row_style}><td></td><td>Average</td><td class="num"></td><td></td><td class="num"></td>'
+sale_comp_html += f'<td class="num">{fc(avg_price)}</td><td class="num">{fc(avg_ppu)}</td>'
+sale_comp_html += f'<td class="num">${avg_psf:,.0f}</td><td class="num">{avg_grm_str}</td>'
+sale_comp_html += f'<td></td><td class="num">{avg_dom_str}</td><td></td></tr>\n'
+
+sale_comp_html += f'<tr {summary_row_style}><td></td><td>Median</td><td class="num"></td><td></td><td class="num"></td>'
+sale_comp_html += f'<td class="num">{fc(med_price)}</td><td class="num">{fc(med_ppu)}</td>'
+sale_comp_html += f'<td class="num">${med_psf:,.0f}</td><td class="num">{med_grm_str}</td>'
+sale_comp_html += f'<td></td><td class="num">{med_dom_str}</td><td></td></tr>\n'
+
 # On-market comp table
 on_market_html = ""
 for c in ON_MARKET_COMPS:
