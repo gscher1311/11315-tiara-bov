@@ -250,7 +250,7 @@ def calc_metrics(price):
         "coc": coc, "dscr": dscr, "prin_red": prin_red,
     }
 
-MATRIX_PRICES = list(range(2_400_000, 1_949_999, -25_000))
+MATRIX_PRICES = list(range(2_295_000, 2_094_999, -25_000))
 MATRIX = [calc_metrics(p) for p in MATRIX_PRICES]
 AT_LIST = calc_metrics(LIST_PRICE)
 
