@@ -88,13 +88,15 @@ SUBJECT_LAT, SUBJECT_LNG = SUBJECT_COORDS
 
 COMP_ADDRESSES = {
     "11415 Miranda St, North Hollywood, CA 91601": None,
-    "5626 Willowcrest Ave, North Hollywood, CA 91601": None,
-    "5648 Auckland Ave, North Hollywood, CA 91601": None,
-    "5508 Camellia Ave, North Hollywood, CA 91601": None,
-    "11320 Emelita St, North Hollywood, CA 91601": None,
-    "6003 Cahuenga Blvd, North Hollywood, CA 91601": None,
+    "14932 Kittridge St, Van Nuys, CA 91405": None,
+    "6827 Ranchito Ave, Van Nuys, CA 91405": None,
+    "13508 Victory Blvd, Van Nuys, CA 91401": None,
+    "5539 Camellia Ave, North Hollywood, CA 91601": None,
+    "6940 Ben Ave, North Hollywood, CA 91605": None,
     "5841 Tujunga Ave, North Hollywood, CA 91601": None,
-    "5622 Willowcrest Ave, North Hollywood, CA 91601": None,
+    "6763 Case Ave, North Hollywood, CA 91606": None,
+    "6441 Satsuma Ave, North Hollywood, CA 91606": None,
+    "6118 Ethel Ave, Van Nuys, CA 91401": None,
 }
 RENT_COMP_ADDRESSES = {
     "6047 Tujunga Ave, North Hollywood, CA 91601": None,
@@ -183,7 +185,7 @@ def build_markers_from_comps(comps, addr_dict, comp_color, subject_lat, subject_
 # ============================================================
 # FINANCIAL CONSTANTS
 # ============================================================
-LIST_PRICE = 2_350_000
+LIST_PRICE = 2_195_000
 UNITS = 4
 SF = 4_350
 LOT_SF = 7_000
@@ -248,7 +250,7 @@ def calc_metrics(price):
         "coc": coc, "dscr": dscr, "prin_red": prin_red,
     }
 
-MATRIX_PRICES = list(range(2_500_000, 2_074_999, -25_000))
+MATRIX_PRICES = list(range(2_400_000, 1_949_999, -25_000))
 MATRIX = [calc_metrics(p) for p in MATRIX_PRICES]
 AT_LIST = calc_metrics(LIST_PRICE)
 
@@ -269,16 +271,18 @@ RENT_ROLL = [
 # ============================================================
 SALE_COMPS = [
     {"num": 1, "addr": "11415 Miranda St", "units": 4, "yr": 1963, "sf": 4164, "price": 1550000, "ppu": 387500, "psf": 372, "grm": 16.5, "date": "03/2025", "dom": 72, "notes": "Renovated; quartz, mini-splits, W/D"},
-    {"num": 2, "addr": "5626 Willowcrest Ave", "units": 4, "yr": "--", "sf": 5815, "price": 2525000, "ppu": 631250, "psf": 434, "grm": 14.7, "date": "04/2025", "dom": 21, "notes": "C2 condition; appraisal comp"},
-    {"num": 3, "addr": "5648 Auckland Ave", "units": 4, "yr": "--", "sf": 5299, "price": 2650000, "ppu": 662500, "psf": 500, "grm": 15.0, "date": "03/2024", "dom": 21, "notes": "C2; 8-car garage; appraisal comp"},
-    {"num": 4, "addr": "5508 Camellia Ave", "units": 4, "yr": "--", "sf": 5632, "price": 2900000, "ppu": 725000, "psf": 515, "grm": 15.2, "date": "12/2024", "dom": 11, "notes": "Highest rent ($15,925/mo); appraisal comp"},
-    {"num": 5, "addr": "11320 Emelita St", "units": 3, "yr": 1923, "sf": 2502, "price": 970000, "ppu": 323333, "psf": 388, "grm": 12.9, "date": "08/2025", "dom": 20, "notes": "Probate; pre-renovation baseline"},
-    {"num": 6, "addr": "6003 Cahuenga Blvd", "units": 4, "yr": 1956, "sf": 3420, "price": 1250000, "ppu": 312500, "psf": 365, "grm": 20.9, "date": "07/2025", "dom": 116, "notes": "Maintained, not renovated; 116 DOM"},
+    {"num": 2, "addr": "14932 Kittridge St", "units": 4, "yr": 1961, "sf": 4209, "price": 1734000, "ppu": 433500, "psf": 412, "grm": "--", "date": "01/2026", "dom": "--", "notes": "Van Nuys; similar vintage and size"},
+    {"num": 3, "addr": "6827 Ranchito Ave", "units": 4, "yr": 1973, "sf": 4800, "price": 1950000, "ppu": 487500, "psf": 406, "grm": "--", "date": "09/2025", "dom": 119, "notes": "Duplex + 2 new ADUs; proj. $15K/mo"},
+    {"num": 4, "addr": "13508 Victory Blvd", "units": 4, "yr": 1951, "sf": 2779, "price": 2055000, "ppu": 513750, "psf": 740, "grm": "--", "date": "04/2025", "dom": "--", "notes": "Valley Glen; 4 units"},
+    {"num": 5, "addr": "5539 Camellia Ave", "units": 3, "yr": 1948, "sf": 2127, "price": 2090000, "ppu": 696667, "psf": 983, "grm": "--", "date": "10/2024", "dom": "--", "notes": "NoHo 91601; 3 units"},
+    {"num": 6, "addr": "6940 Ben Ave", "units": 3, "yr": 1939, "sf": 2052, "price": 2250000, "ppu": 750000, "psf": 1096, "grm": "--", "date": "09/2025", "dom": "--", "notes": "NoHo 91605; ceiling comp"},
 ]
 
 ON_MARKET_COMPS = [
     {"num": 1, "addr": "5841 Tujunga Ave", "units": 4, "yr": 1941, "sf": "--", "price": 1250000, "ppu": 312500, "psf": "--", "dom": 166, "notes": "NOD filed; AS-IS; 166 DOM"},
-    {"num": 2, "addr": "5622 Willowcrest Ave", "units": 4, "yr": "--", "sf": 5100, "price": 2595000, "ppu": 648750, "psf": 509, "dom": 82, "notes": "C1 (superior); appraisal active listing"},
+    {"num": 2, "addr": "6763 Case Ave", "units": 4, "yr": 1942, "sf": 2290, "price": 1799000, "ppu": 449750, "psf": 786, "dom": 3, "notes": "Renovated 3BR + three 1BR ADUs; new listing"},
+    {"num": 3, "addr": "6441 Satsuma Ave", "units": 4, "yr": 1950, "sf": 3282, "price": 1889000, "ppu": 472250, "psf": 576, "dom": 11, "notes": "New construction ADUs; renovated duplex"},
+    {"num": 4, "addr": "6118 Ethel Ave", "units": 3, "yr": 1940, "sf": 3672, "price": 2500000, "ppu": 833333, "psf": 681, "dom": 16, "notes": "Main house + 2 ADUs; Van Nuys; ceiling"},
 ]
 
 # ============================================================
@@ -399,11 +403,15 @@ NOI_AT_LIST = CUR_EGI - total_exp_calc
 # Sale comp table
 sale_comp_html = ""
 for c in SALE_COMPS:
+    grm_str = f'{c["grm"]:.1f}x' if c["grm"] != "--" else "--"
+    psf_str = f'${c["psf"]:,}' if c["psf"] != "--" else "--"
+    dom_str = f'{c["dom"]:,}' if c["dom"] != "--" else "--"
+    sf_str = f'{c["sf"]:,}' if c["sf"] != "--" else "--"
     sale_comp_html += f'<tr><td>{c["num"]}</td><td>{c["addr"]}</td><td class="num">{c["units"]}</td>'
-    sale_comp_html += f'<td>{c["yr"]}</td><td class="num">{c["sf"]:,}</td>'
+    sale_comp_html += f'<td>{c["yr"]}</td><td class="num">{sf_str}</td>'
     sale_comp_html += f'<td class="num">{fc(c["price"])}</td><td class="num">{fc(c["ppu"])}</td>'
-    sale_comp_html += f'<td class="num">${c["psf"]}</td><td class="num">{c["grm"]:.1f}x</td>'
-    sale_comp_html += f'<td>{c["date"]}</td><td class="num">{c["dom"]}</td><td>{c["notes"]}</td></tr>\n'
+    sale_comp_html += f'<td class="num">{psf_str}</td><td class="num">{grm_str}</td>'
+    sale_comp_html += f'<td>{c["date"]}</td><td class="num">{dom_str}</td><td>{c["notes"]}</td></tr>\n'
 
 # On-market comp table
 on_market_html = ""
@@ -667,7 +675,7 @@ html_parts.append(f"""
 </div>
 <div class="inv-text">
 <p>The LAAA Team is pleased to present 11315 Tiara Street, a fully renovated triplex with a junior accessory dwelling unit in the heart of Mid-Town North Hollywood. The property consists of three spacious 3-bedroom/2-bathroom units and one 1-bedroom/1-bathroom JADU, totaling approximately 4,350 square feet of living space on a 7,000-square-foot lot. Originally constructed in 1926 with additions in 2005, the property underwent a comprehensive renovation in 2024-2025 that included new electrical (400-amp panel with 3 meters), new plumbing, 13 mini-split HVAC units, and complete interior remodeling - effectively delivering new-construction systems in an established residential setting.</p>
-<p>The property generates $184,800 in annual gross scheduled rent at full occupancy, with three-bedroom units commanding $4,200-$4,400 per month and the furnished JADU at $2,500 per month. At the offered price of $2,350,000, the property delivers a GRM of 12.7 against a comparable sales average of 15.0, meaning a buyer acquires significantly more income per dollar invested than recent comparable transactions in the area.</p>
+<p>The property generates $184,800 in annual gross scheduled rent at full occupancy, with three-bedroom units commanding $4,200-$4,400 per month and the furnished JADU at $2,500 per month. At the offered price of $2,195,000, the property delivers a GRM of 11.9x and a price per unit of $548,750 - below the average of comparable vintage sales in the submarket, meaning a buyer acquires more income per dollar invested than recent comparable transactions.</p>
 <p>North Hollywood's Mid-Town corridor is positioned for material appreciation driven by District NoHo, a $1 billion-plus Metro joint development delivering 1,500 residential units and 500,000 square feet of office space at the North Hollywood Metro B Line station, less than one mile from the property.</p>
 </div>
 </div>
@@ -676,7 +684,7 @@ html_parts.append(f"""
 <div class="inv-highlights"><h4>Investment Highlights</h4><ul>
 <li><strong>$184,800 Annual Gross Rent</strong> - buyer-normalized GSR at full occupancy with all four units at current/market rents</li>
 <li><strong>All New Systems</strong> - 400A electrical panel, 13 mini-splits, new plumbing, 3 separate meters; 6 finaled permits (2024-2025)</li>
-<li><strong>GRM of 12.7 at List</strong> - 15% below comparable sales average GRM of 15.0; buyer acquires more income per dollar than any recent comp</li>
+<li><strong>GRM of 11.9x at List</strong> - $548,750/unit is below the comparable vintage sales average; buyer acquires more income per dollar than recent comps</li>
 <li><strong>Transit Priority Area</strong> - 0.7 miles to Metro B Line North Hollywood Station; Walk Score 79; District NoHo $1B+ development catalyst</li>
 <li><strong>TOC Tier 1 + LARD2 Zoning</strong> - density bonus eligible for future redevelopment</li>
 <li><strong>Turnkey Operation</strong> - C2 condition rating; no soft-story requirement; 4 parking spaces; no deferred maintenance</li>
@@ -810,10 +818,10 @@ html_parts.append(f"""
 </div>
 <div class="buyer-objections">
 <h3 class="sub-heading" style="margin-top:0;">Anticipated Buyer Objections</h3>
-<div class="obj-item"><p class="obj-q">"No MLS closed sales above $1.55M for a 3-4 unit here. How do you justify $2.35M?"</p><p class="obj-a">The MLS comp set is dominated by unrenovated and distressed properties with rents of $900-$3,100/mo. The subject generates $15,400/mo - more than double the best MLS comp. Three appraiser-selected renovated 4-unit comps traded at $2.525M-$2.9M. At $2.35M, the subject's GRM of 12.7 is 15% below the renovated comp average of 15.0.</p></div>
+<div class="obj-item"><p class="obj-q">"How does $2.195M compare to closed sales for vintage 3-4 unit properties?"</p><p class="obj-a">Six comparable vintage sales (1939-1973 construction) closed between $1.55M and $2.25M. Three sales exceeded $2M: Victory Blvd at $2.055M, 5539 Camellia at $2.09M, and Ben Ave at $2.25M. The subject at $548,750/unit is below the average $/unit of these comps, and its $15,400/mo income exceeds all but one comparable property.</p></div>
 <div class="obj-item"><p class="obj-q">"The JADU is unpermitted. Why should I pay for a 4th unit?"</p><p class="obj-a">The JADU's $2,500 monthly rent is 16% of total gross income. Under AB 2533 (effective January 2025), California provides clear legalization pathways. Even excluding Unit 4 entirely, the three remaining units generate $12,900/mo ($154,800 annually), supporting a price above $1.9M.</p></div>
-<div class="obj-item"><p class="obj-q">"All utilities are landlord-paid. What does that cost?"</p><p class="obj-a">Estimated annual utility burden is approximately $13,900. This is fully reflected in the underwriting (total expenses of $45,926). The utilities-included strategy supports premium rents: subject 3-bedrooms at $4,200-$4,400 vs. comparable units without utilities at $3,400-$3,900.</p></div>
-<div class="obj-item"><p class="obj-q">"Property taxes will be reassessed at purchase. How does that affect returns?"</p><p class="obj-a">At $2.35M, annual taxes increase from $12,714 to approximately $27,495 (+$14,781/yr). Even with reassessed taxes, the property generates NOI of approximately $118,500, representing a 5.04% cap rate - competitive for a fully renovated, transit-adjacent residential asset in Los Angeles.</p></div>
+<div class="obj-item"><p class="obj-q">"All utilities are landlord-paid. What does that cost?"</p><p class="obj-a">Estimated annual utility burden is approximately $13,900. This is fully reflected in the underwriting. The utilities-included strategy supports premium rents: subject 3-bedrooms at $4,200-$4,400 vs. comparable units without utilities at $3,400-$3,900, an effective premium of $150-$200/month per unit.</p></div>
+<div class="obj-item"><p class="obj-q">"Property taxes will be reassessed at purchase. How does that affect returns?"</p><p class="obj-a">At $2.195M, annual taxes increase from $12,714 to approximately $25,682 (+$12,968/yr). Even with reassessed taxes, the property generates NOI of approximately $119,850, representing a 5.46% cap rate - competitive for a fully renovated, transit-adjacent residential asset in Los Angeles.</p></div>
 </div>
 </div>
 <div class="buyer-photo"><img src="{IMG["buyer_photo"]}" alt="11315 Tiara St"></div>
@@ -835,14 +843,14 @@ html_parts.append(f"""
 <tbody>{sale_comp_html}</tbody>
 </table></div>
 <h3 class="sub-heading">Individual Comp Analysis</h3>
-<p style="font-size:13px;color:#666;margin-bottom:16px;"><em>Subject metrics at $2,350,000: $587,500/unit | $540/SF | 12.7x GRM</em></p>
+<p style="font-size:13px;color:#666;margin-bottom:16px;"><em>Subject metrics at $2,195,000: $548,750/unit | $504/SF | 11.9x GRM</em></p>
 <div class="narrative">
-<p><strong>1. 11415 Miranda St ($1,550,000) - $387,500/unit | $372/SF | 16.5x GRM</strong><br>The most directly comparable MLS closed sale. Miranda is a renovated 4-unit property with modern finishes including quartz countertops, ductless split HVAC, and tankless water heaters. At 4,164 SF, it is similar in size to the subject. However, Miranda's actual monthly rent of $7,845 is roughly half the subject's $15,400. The subject's substantially higher income supports a significant premium. Miranda establishes the floor for renovated properties at $387,500 per unit.</p>
-<p><strong>2. 5626 Willowcrest Ave ($2,525,000) - $631,250/unit | $434/SF | 14.7x GRM</strong><br>A renovated 4-unit property rated C2 (Good) by the appraiser, comparable to the subject's condition. Willowcrest generated $14,300 per month at sale - closely aligned with the subject's income. The key difference is building size: Willowcrest's 5,815 SF exceeds the subject by approximately 1,465 SF, accounting for its higher total price. At $434/SF, Willowcrest provides a relevant $/SF benchmark.</p>
-<p><strong>3. 5648 Auckland Ave ($2,650,000) - $662,500/unit | $500/SF | 15.0x GRM</strong><br>Another renovated 4-unit rated C2. Auckland features all 3-bedroom/3-bathroom units and an 8-car garage - superior parking to the subject's 4-space driveway. Sold in March 2024, making it the oldest sale at 23 months. Its $500/SF and $662,500/unit provide context for the upper range of the market.</p>
-<p><strong>4. 5508 Camellia Ave ($2,900,000) - $725,000/unit | $515/SF | 15.2x GRM</strong><br>The highest-priced comp and closest match in rent level. Camellia's $15,925/mo is remarkably close to the subject's $15,400. Sold in only 11 days, indicating strong buyer demand. Camellia is larger at 5,632 SF with 4- and 5-bedroom configurations, partially accounting for the higher total price. Establishes the $/SF ceiling at $515.</p>
-<p><strong>5. 11320 Emelita St ($970,000) - Baseline Reference</strong><br>One block from the subject with identical LARD2 zoning and similar lot size. Sold in probate with rents of $6,265/mo. Illustrates the value created by renovation - transforming a similar property from the $970K unrenovated tier to the $2.35M renovated tier.</p>
-<p><strong>6. 6003 Cahuenga Blvd ($1,250,000) - Maintained Reference</strong><br>A well-maintained but unrenovated 4-unit on a commercial boulevard. At 116 DOM and $312,500/unit, demonstrates the pricing gap between maintained and fully renovated properties.</p>
+<p><strong>1. 11415 Miranda St ($1,550,000) - $387,500/unit | $372/SF | 16.5x GRM</strong><br>The most directly comparable MLS closed sale. Miranda is a renovated 4-unit property with modern finishes including quartz countertops, ductless split HVAC, and tankless water heaters. At 4,164 SF, it is similar in size to the subject. However, Miranda's actual monthly rent of $7,845 is roughly half the subject's $15,400. The subject's substantially higher income supports a meaningful premium. At $387,500/unit, Miranda establishes the floor for renovated properties in the submarket.</p>
+<p><strong>2. 14932 Kittridge St ($1,734,000) - $433,500/unit | $412/SF</strong><br>A 4-unit property built in 1961 with 4,209 SF - nearly identical in vintage and building size to the subject. Sold in January 2026, making it the most recent sale in the comp set. Located in Van Nuys (91405), a slightly less desirable submarket than Mid-Town North Hollywood (91601). The subject's superior location, higher rental income ($15,400/mo), and fully renovated condition support a premium over Kittridge's $433,500/unit.</p>
+<p><strong>3. 6827 Ranchito Ave ($1,950,000) - $487,500/unit | $406/SF</strong><br>The most structurally similar comp: an older duplex (built 1973) with two newly constructed ADUs, mirroring the subject's older-structure-plus-additions configuration. At 4,800 SF on a 10,343 SF lot, the property is larger than the subject. Projected rents of approximately $15,000/month closely match the subject's $15,400. Sold at $487,500/unit after 119 days on market (originally listed at $2,399,000). The subject's Mid-Town North Hollywood location and transit proximity support pricing above this comp.</p>
+<p><strong>4. 13508 Victory Blvd ($2,055,000) - $513,750/unit | $740/SF</strong><br>A 4-unit property built in 1951, sold in April 2025 in Valley Glen. At 2,779 SF, the building is significantly smaller than the subject (4,350 SF), which accounts for the higher $/SF. On a per-unit basis at $513,750, this comp supports pricing in the $2M+ range for vintage 4-unit properties in the greater North Hollywood area.</p>
+<p><strong>5. 5539 Camellia Ave ($2,090,000) - $696,667/unit | $983/SF</strong><br>A 3-unit property built in 1948, located in North Hollywood 91601 - the same zip code as the subject. At only 2,127 SF, the extremely high $/SF reflects the premium that smaller buildings command on a per-foot basis. The subject at $504/SF and $548,750/unit represents a meaningful discount on both metrics despite offering one additional unit and more than double the building square footage.</p>
+<p><strong>6. 6940 Ben Ave ($2,250,000) - $750,000/unit | $1,096/SF</strong><br>A 3-unit property built in 1939 in North Hollywood 91605. At 2,052 SF, the small building size drives the high $/SF. This is the highest-priced comp in the set, establishing a ceiling for the submarket. The subject at $2,195,000 is priced 2.4% below this comp while offering one additional unit and substantially more building area, positioning it as the better value per unit and per square foot.</p>
 </div>
 </div>
 """)
@@ -862,8 +870,8 @@ html_parts.append(f"""
 <tbody>{on_market_html}</tbody>
 </table></div>
 <div class="narrative">
-<p>The current on-market inventory for renovated 3-4 unit properties in North Hollywood is extremely thin, with only two active listings identified. 5841 Tujunga Avenue is listed at $1,250,000 but carries significant red flags: a Notice of Default, 166 days on market, and no financial information. This listing does not represent a competitive threat.</p>
-<p>5622 Willowcrest Avenue is listed at $2,595,000 for a 4-unit property rated C1 (superior condition). At $648,750/unit with 82 DOM, this provides a relevant pricing benchmark for the upper end. The subject at $2,350,000 ($587,500/unit) is priced 9.4% below the Willowcrest listing, offering buyers a compelling alternative at a lower entry point. The limited active supply works in the seller's favor.</p>
+<p>The active inventory for renovated 3-4 unit properties in North Hollywood and the surrounding area includes four listings spanning $1.25M to $2.5M. 5841 Tujunga Avenue ($1,250,000) carries a Notice of Default and 166 days on market - a distressed listing that does not represent competitive supply. 6763 Case Avenue ($1,799,000) is a freshly listed renovated 4-plex with a 3BR main unit and three 1BR ADUs - a comparable concept to the subject at a lower price point driven by smaller unit sizes and lower income. 6441 Satsuma Avenue ($1,889,000) is a renovated duplex with two new ADUs in North Hollywood 91606, listed at a 5.85% proforma cap rate.</p>
+<p>6118 Ethel Avenue ($2,500,000) in Van Nuys represents the ceiling: a remodeled main house with two ADUs on a large lot generating $13,600/month in rent. The subject at $2,195,000 is positioned 16% below Ethel while generating higher monthly income ($15,400 vs. $13,600). Among the three competitive active listings (Case, Satsuma, Ethel), the subject offers the strongest income-to-price ratio, supporting its positioning in the market.</p>
 </div>
 </div>
 """)
@@ -944,11 +952,11 @@ html_parts.append(f"""
 <tr class="summary"><td><strong>Net Operating Income</strong></td><td class="num"><strong>${NOI_AT_LIST:,.0f}</strong></td><td class="num"><strong>${NOI_AT_LIST//UNITS:,.0f}</strong></td><td class="num"><strong>${NOI_AT_LIST/SF:.2f}</strong></td><td class="num"><strong>{NOI_AT_LIST/CUR_EGI*100:.1f}%</strong></td></tr>
 </tbody>
 </table>
-<p style="font-size:11px;font-style:italic;color:#666;">Property taxes shown at reassessed basis ($2,350,000 &times; 1.17%). Current Prop 13 basis: $12,714. See note [1].</p>
+<p style="font-size:11px;font-style:italic;color:#666;">Property taxes shown at reassessed basis ($2,195,000 &times; 1.17%). Current Prop 13 basis: $12,714. See note [1].</p>
 </div>
 <div class="os-right">
 <h3 class="sub-heading" style="margin-top:0;">Notes to Operating Statement</h3>
-<p><strong>[1] Property Taxes:</strong> Shown at current Prop 13 basis ($12,714). At $2.35M purchase, reassessed to ~$27,495 (1.17%). Buyer's actual NOI adjusts by -$14,781.</p>
+<p><strong>[1] Property Taxes:</strong> Shown at current Prop 13 basis ($12,714). At $2.195M purchase, reassessed to ~$25,682 (1.17%). Buyer's actual NOI adjusts by -$12,968.</p>
 <p><strong>[2] Insurance:</strong> $4,000/yr per seller estimate ($1,000/unit). Buyer should obtain independent quotes; wildfire and earthquake riders may add $1,000-$2,000.</p>
 <p><strong>[3] Water / Sewer:</strong> $4,800/yr ($1,200/unit). Landlord-paid; all utilities included in rent.</p>
 <p><strong>[4] Trash:</strong> $1,600/yr ($400/unit). LA Bureau of Sanitation service.</p>
@@ -1046,14 +1054,14 @@ html_parts.append(f"""
 </table></div>
 <div class="summary-trade-range">
 <div class="summary-trade-label">A Trade Price in the Current Investment Environment of</div>
-<div class="summary-trade-prices">$2,000,000 &mdash; $2,200,000</div>
+<div class="summary-trade-prices">$1,950,000 &mdash; $2,100,000</div>
 </div>
 <h3 class="sub-heading">Pricing Rationale</h3>
 <div class="narrative">
-<p>The offering price of $2,350,000 is supported by a Chase appraisal dated August 14, 2025. The property's buyer-normalized gross scheduled rent of $184,800 per year produces a GRM of 12.7 - meaningfully below the renovated comparable average of 15.0. This means the buyer acquires 15% more rental income per dollar invested than the average comparable transaction. The price per unit of $587,500 is 13% below the renovated comp average of $672,917, providing further margin for the buyer.</p>
-<p>The expected sale range of $2,000,000 - $2,200,000 reflects the MLS market reality where buyers may apply a discount relative to the appraiser-selected comps, particularly given the subject's smaller building size (4,350 SF vs. 5,000-5,800 SF for the appraiser comps) and the unpermitted JADU. Within this range, the subject still delivers a GRM of 10.8-11.9x and cap rates of 5.5-6.1% on a reassessed basis - attractive for a turnkey, transit-adjacent residential asset.</p>
+<p>The offering price of $2,195,000 is supported by six comparable vintage sales ranging from $1,550,000 to $2,250,000. Three comps exceeded $2,000,000: Victory Blvd ($2,055,000), 5539 Camellia ($2,090,000), and Ben Ave ($2,250,000). The subject's price per unit of $548,750 is competitive within this comp set, and its $15,400/month income is the highest among all comparable properties. A Chase appraisal dated August 2025 valued the property at $2,350,000 using new-construction comps; the offered price represents a 6.6% discount to the appraised value.</p>
+<p>The expected sale range of $1,950,000 - $2,100,000 reflects MLS market conditions for renovated vintage 3-4 unit properties. The subject's unpermitted JADU and all-landlord-paid utilities may lead some buyers to discount the fourth unit. Within this range, the property delivers cap rates of 5.5-6.3% on a reassessed basis and GRMs of 10.5-11.4x - attractive returns for a turnkey, transit-adjacent residential asset with all-new systems and no deferred maintenance.</p>
 </div>
-<div class="condition-note"><strong>Assumptions &amp; Conditions:</strong> All rents based on current/asking rates as of February 2026. Vacant Unit 2 shown at $4,200 market asking rent. Expenses estimated from benchmarks and seller-provided data. No T-12 operating statement available. Insurance at $4,000 per seller estimate. Management fee included at 4% of EGI for normalization. JADU (Unit 4) is unpermitted; income from this unit may not be recognized by all lenders. All utilities are landlord-paid. Financing terms are estimates and may vary by borrower profile and lender. Property taxes reassessed at purchase price per California Proposition 13.</div>
+<div class="condition-note"><strong>Assumptions &amp; Conditions:</strong> All rents based on current/asking rates as of February 2026. Vacant Unit 2 shown at $4,200 market asking rent. Expenses estimated from benchmarks and seller-provided data. No T-12 operating statement available. Insurance at $4,000 per seller estimate. Management fee included at 4% of EGI for normalization. JADU (Unit 4) is unpermitted; income from this unit may not be recognized by all lenders. All utilities are landlord-paid. Financing terms are estimates and may vary by borrower profile and lender. Property taxes reassessed at purchase price per California Proposition 13. Sale comps include CoStar records with limited income data; GRM shown where available.</div>
 </div>
 """)
 
